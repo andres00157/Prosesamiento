@@ -135,16 +135,44 @@ def funcion(Img_lectura):
     img_contrast = np.power(img_mask,1.1).clip(0,255).astype(np.uint8)
     
     
-    neig = 11
+    neig = 15
     
     imagen_gausiana_1 = cv2.GaussianBlur(img_contrast,(neig,neig),sigmaX= 3,sigmaY=3)
-    imagen_gausiana_2 = cv2.GaussianBlur(img_contrast,(neig,neig),sigmaX= 5,sigmaY=5)
+    imagen_gausiana_2 = cv2.GaussianBlur(img_contrast,(neig,neig),sigmaX= 4,sigmaY=4)
     bordes = imagen_gausiana_2-imagen_gausiana_1
+        
+    kernel= np.ones((3,3),np.uint8)
+    bordes=cv2.erode(bordes,kernel)
+    bordes=cv2.dilate(bordes,kernel)
+    
+    _ , bordes = cv2.threshold(bordes ,200 , 255, cv2.THRESH_BINARY)
+    
+    #bordes = cv2.Canny(image=bordes, threshold1=100, threshold2=255)
+    
+    #kernel= np.array([[-1,-1,-1],[-1,8,-1],[-1,-1,-1]])
+    #bordes = cv2.filter2D(bordes,-1,kernel)
+    
+    bordes = cv2.Laplacian(bordes,cv2.CV_64F)
+    bordes = cv2.convertScaleAbs(bordes)
+    _ , bordes = cv2.threshold(bordes ,1 , 255, cv2.THRESH_BINARY)
+    
+    #_ , bordes = cv2.threshold(bordes ,1 , 255, cv2.THRESH_BINARY)
+
+    contours, _ = cv2.findContours(bordes, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+    
+    draw_image= cv2.merge((Img_lectura,Img_lectura,Img_lectura))
+    
+    for idx, i in enumerate(contours):
+        if(len(i)>100):
+            cv2.drawContours(draw_image, i, -1, (0,0,255), 3)
+    
+    
+    
     
     
     
     #kernel= np.array([[-1,-1,-1],[-1,8,-1],[-1,-1,-1]])
-    #edges = cv2.filter2D(img_mask,-1,kernel)
+    #edge = cv2.filter2D(bordes,-1,kernel)
     
     
     #edges = cv2.Canny(image=img_contrast, threshold1=100, threshold2=250)
@@ -204,16 +232,19 @@ def funcion(Img_lectura):
     imprimir= img_contrast
     #imprimir_2 =cv2.bitwise_and(Img_lectura,mask_new) 
     imprimir_2 = bordes
-    
+    imprimir_3 = draw_image
     if(Img_lectura.shape[0]>1500):
         imprimir_image("Nombre",imprimir,3)
         imprimir_image("img",imprimir_2,3)
+        imprimir_image("img_2",imprimir_3,3)
     elif(Img_lectura.shape[0]>1000):
         imprimir_image("Nombre",imprimir,2)
         imprimir_image("img",imprimir_2,2)
+        imprimir_image("img_2",imprimir_3,2)
     else:
         imprimir_image("Nombre",imprimir,1)
         imprimir_image("img",imprimir_2,1)
+        imprimir_image("img_2",imprimir_3,1)
 
 
 class pruebas():
