@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 """
-Created on Tue Oct  5 18:09:08 2021
+Created on Fri Nov 12 10:24:23 2021
 
 @author: xboxk
 """
+
 
 import numpy as np
 import cv2
@@ -165,18 +166,19 @@ def funcion(Img_lectura, external_variable= 0):
     
     _ , bordes = cv2.threshold(bordes ,200 , 255, cv2.THRESH_BINARY)
     
-    #bordes = cv2.Canny(image=bordes, threshold1=100, threshold2=255)
-    
-    #kernel= np.array([[-1,-1,-1],[-1,8,-1],[-1,-1,-1]])
-    #bordes = cv2.filter2D(bordes,-1,kernel)
     
     bordes = cv2.Laplacian(bordes,cv2.CV_64F)
     bordes = cv2.convertScaleAbs(bordes)
     _ , bordes = cv2.threshold(bordes ,1 , 255, cv2.THRESH_BINARY)
     
-    #_ , bordes = cv2.threshold(bordes ,1 , 255, cv2.THRESH_BINARY)
+  
 
-    lim = 120
+    
+    
+    
+    
+
+    lim = 150
     ret, labels = cv2.connectedComponents(bordes)
     new_ret = np.arange(0,ret).tolist()
     for i in range(ret):
@@ -195,76 +197,30 @@ def funcion(Img_lectura, external_variable= 0):
 
     ret = len(new_ret)
         
-        
     
-    print("variable",external_variable)
-    draw_image = np.zeros_like(bordes)
-    draw_image[labels==(new_ret[external_variable % ret])]=255
+
+    borde_filtrado = np.zeros_like(bordes)
+    borde_filtrado[labels==(new_ret[0])]=255
     
+    borde_filtrado = cv2.bitwise_not(borde_filtrado)
     
+    draw_image = cv2.merge((borde_filtrado,borde_filtrado,borde_filtrado))
     
-    #kernel= np.array([[-1,-1,-1],[-1,8,-1],[-1,-1,-1]])
-    #edge = cv2.filter2D(bordes,-1,kernel)
-    
-    
-    #edges = cv2.Canny(image=img_contrast, threshold1=100, threshold2=250)
-    #kernel= np.array([[0,0,0],[1,1,1],[0,0,0]],np.uint8)
-    
-    #edges=cv2.erode(edges,kernel)
-    #mascara_final=cv2.dilate(mascara_final,kernel_linea)
-    
-    #_ , edges = cv2.threshold(edges ,10 , 255, cv2.THRESH_BINARY)
+    sift = cv2.SIFT_create(nfeatures=1000)   # shift invariant feature transform
+    keypoints, descriptors = sift.detectAndCompute(borde_filtrado, None)
 
     
     
-
-    """
-    alpha = 0.0005  
-    nhood= 20
-    threshold= h*w*alpha
-    N_peaks = 20
-    peaks = find_peaks(hist, nhood, threshold, N_peaks)
-    
-
-    beta = float(hist[peaks[0]])*0.5
-
-    plt.plot([0,255],[h*w*alpha,h*w*alpha])
-    plt.plot([0,255],[beta,beta])
-    plt.scatter(peaks,hist[peaks],c =np.ones(len(peaks)) )
-    plt.plot(hist)
-    plt.show()
-
-    img_draw= np.ones((img_mask.shape[0],img_mask.shape[1],3),np.uint8)*255
-    
-    mask_aux = np.zeros((img_mask.shape[0],img_mask.shape[1]),np.uint8)*255
-    for color_pos in (peaks):
-        if(hist[color_pos]<beta):
-            lim_inf = np.array(np.uint8(np.max([color_pos - nhood//2, 0])))
-            lim_sup = np.array(np.uint8(np.min([color_pos + nhood//2, 254]) + 1))
-        
-            mask_aux = cv2.bitwise_or(cv2.inRange(img_mask, lim_inf, lim_sup),mask_aux)
-            
-            img_draw = paint(img_mask, nhood, color_pos,img_draw, np.uint8((np.random.rand(1,3)*255)))
-    
-    mask_new = cv2.bitwise_and(mask_aux,mask)
-    """
-    
-    #img_contrast = np.power(img_mask,1.1).clip(0,255).astype(np.uint8)
-    #edges = cv2.Canny(image=img_contrast, threshold1=1, threshold2=250)
-    """ 
-    imagen_blur=cv2.blur(img_mask,(11,11),0)
-
-    img_contrast = np.power(imagen_blur,1.1).clip(0,255).astype(np.uint8)
-    
-    kernel= np.array([[-1,-1,-1],[-1,8,-1],[-1,-1,-1]])
-    edges = cv2.filter2D(img_mask,-1,kernel)
-    _ , edges = cv2.threshold(edges ,20 , 255, cv2.THRESH_BINARY)
-    """
-    
+    for point in keypoints:
+        coor = point.pt
+        x = int(coor[0])
+        y = int(coor[1])
+        image = cv2.circle(draw_image, (x,y), 5, [0,0,255], -1)
     imprimir= img_contrast
     #imprimir_2 =cv2.bitwise_and(Img_lectura,mask_new) 
-    imprimir_2 = bordes
-    imprimir_3 = draw_image
+    imprimir_2 = draw_image
+    imprimir_3 = borde_filtrado 
+    #cv2.imwrite("Image_ocluida.png",draw_image)
     if(Img_lectura.shape[0]>1500):
         imprimir_image("Nombre",imprimir,3)
         imprimir_image("img",imprimir_2,3)
