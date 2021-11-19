@@ -108,6 +108,7 @@ def dectetion_descriptor(image):
 #visualizar()
 
 def funcion(Img_lectura, external_variable= 0):
+    img_in = Img_lectura.copy()
     Img_lectura = cv2.cvtColor(Img_lectura, cv2.COLOR_BGR2GRAY)
     h,w = Img_lectura.shape
     
@@ -206,7 +207,7 @@ def funcion(Img_lectura, external_variable= 0):
     
     draw_image = cv2.merge((borde_filtrado,borde_filtrado,borde_filtrado))
     
-    sift = cv2.SIFT_create(nfeatures=1000)   # shift invariant feature transform
+    sift = cv2.SIFT_create(nfeatures=5000)   # shift invariant feature transform
     keypoints, descriptors = sift.detectAndCompute(borde_filtrado, None)
 
     
@@ -216,7 +217,54 @@ def funcion(Img_lectura, external_variable= 0):
         x = int(coor[0])
         y = int(coor[1])
         image = cv2.circle(draw_image, (x,y), 5, [0,0,255], -1)
-    imprimir= img_contrast
+        
+    
+    descriptor_cuchilla = np.load("cuchilla_v2.npy")
+    
+    # Interest points matching
+    bf = cv2.BFMatcher(cv2.NORM_L2)
+    descriptor_cuchilla = np.float32(descriptor_cuchilla)
+    matches = bf.knnMatch(descriptor_cuchilla,descriptors, k=1)
+
+    pos_x = []
+    pos_y = []
+    min_exp= 100
+    for  i in (matches):
+        if(min_exp>i[0].distance):
+            min_exp =i[0].distance 
+        if(i[0].distance<25):
+            pos_x.append(keypoints[i[0].trainIdx].pt[0])
+            pos_y.append(keypoints[i[0].trainIdx].pt[1])
+    print("cuchilla",len(pos_x),min_exp)
+    if(len(pos_x)>7):
+        pos_x = np.array(pos_x)
+        pos_y = np.array(pos_y)
+        cv2.putText(img_in, "Cuchilla", (int(np.min(pos_x)),int(np.min(pos_y))-10 ),cv2.FONT_HERSHEY_SIMPLEX,1,(0, 0, 255),2, cv2.LINE_AA)
+        cv2.rectangle(img_in, (int(np.min(pos_x)),int(np.min(pos_y)) ), (int(np.max(pos_x)),int(np.max(pos_y))), (0,0,255), 3)
+        
+        
+        
+    descriptor_pistola=  np.float32(np.load("pistola.npy"))
+    
+    matches = bf.knnMatch(descriptor_pistola,descriptors, k=1)
+
+    pos_x = []
+    pos_y = []
+    min_exp= 100
+    for  i in (matches):
+        if(min_exp>i[0].distance):
+            min_exp =i[0].distance 
+        if(i[0].distance<20):
+            pos_x.append(keypoints[i[0].trainIdx].pt[0])
+            pos_y.append(keypoints[i[0].trainIdx].pt[1])
+    print("pistola",len(pos_x),min_exp)
+    if(len(pos_x)>10):
+        pos_x = np.array(pos_x)
+        pos_y = np.array(pos_y)
+        cv2.putText(img_in, "Pistola", (int(np.min(pos_x)),int(np.min(pos_y))-10 ),cv2.FONT_HERSHEY_SIMPLEX,1,(0, 0, 255),2, cv2.LINE_AA)
+        cv2.rectangle(img_in, (int(np.min(pos_x)),int(np.min(pos_y)) ), (int(np.max(pos_x)),int(np.max(pos_y))), (0,0,255), 3)
+    
+    imprimir= img_in
     #imprimir_2 =cv2.bitwise_and(Img_lectura,mask_new) 
     imprimir_2 = draw_image
     imprimir_3 = borde_filtrado 

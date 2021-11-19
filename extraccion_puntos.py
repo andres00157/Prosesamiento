@@ -146,7 +146,10 @@ def guardar_datos():
         xd = 1
     np.save("cuchilla/"+nombre_array+nombre_archivo+".npy", salida)
     
-        
+    for  match, m2 in (matches):
+        print(match.distance,m2.distance)
+        #if match.distance < 0.6 * m2.distance:      
+            
         
         
 
@@ -296,9 +299,9 @@ class pruebas():
             
      def visualizar(self,tiempo):
         global nombre_array,nombre_archivo
-        cont_folder = 2
+        cont_folder =2
         flag = False
-        for i in range(82):
+        for i in range(2,82):
             cont_image = 1
             cambio = True
             cont_var = 0
